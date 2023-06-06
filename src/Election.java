@@ -13,9 +13,13 @@ public class Election {
 
   private int nullFederalDeputyVotes;
 
+  private int nullStateDeputyVotes;
+
   private int presidentProtestVotes;
 
   private int federalDeputyProtestVotes;
+
+  private int stateDeputyProtestVotes;
 
   // Na prática guardaria uma hash do eleitor
   private Map<Voter, Integer> votersPresident = new HashMap<Voter, Integer>();
@@ -23,11 +27,17 @@ public class Election {
   // Na prática guardaria uma hash do eleitor
   private Map<Voter, Integer> votersFederalDeputy = new HashMap<Voter, Integer>();
 
+  private Map<Voter, Integer> votersStateDeputy = new HashMap<Voter, Integer>();
+
   private Map<Integer, President> presidentCandidates = new HashMap<Integer, President>();
 
   private Map<String, FederalDeputy> federalDeputyCandidates = new HashMap<String, FederalDeputy>();
 
+  private Map<String, StateDeputy> stateDeputyCandidates = new HashMap<String, StateDeputy>();
+
   private Map<Voter, FederalDeputy> tempFDVote = new HashMap<Voter, FederalDeputy>();
+
+  private Map<Voter, StateDeputy> tempSDVote = new HashMap<Voter, StateDeputy>();
 
   public static class Builder {
     protected String password;
@@ -56,6 +66,8 @@ public class Election {
     this.nullPresidentVotes = 0;
     this.presidentProtestVotes = 0;
     this.federalDeputyProtestVotes = 0;
+    this.nullStateDeputyVotes = 0;
+    this.stateDeputyProtestVotes = 0;
   }
 
   private Boolean isValid(String password) {
@@ -85,6 +97,22 @@ public class Election {
         tempFDVote.remove(voter);
       }
     }
+    else if (candidate instanceof StateDeputy) {
+      if (votersStateDeputy.get(voter) != null && votersStateDeputy.get(voter) >= 2)
+        throw new StopTrap("Você não pode votar mais de uma vez para deputado estadual");
+
+      if (tempSDVote.get(voter) != null && tempSDVote.get(voter).equals(candidate))
+        throw new Warning("Você não pode votar mais de uma vez em um mesmo candidato");
+
+      candidate.numVotes++;
+      if (votersStateDeputy.get(voter) == null) {
+        votersStateDeputy.put(voter, 1);
+        tempSDVote.put(voter, (StateDeputy) candidate);
+      } else {
+        votersStateDeputy.put(voter, this.votersStateDeputy.get(voter) + 1);
+        tempSDVote.remove(voter);
+      }
+    }
   };
 
   public void computeNullVote(String type, Voter voter) {
@@ -104,6 +132,16 @@ public class Election {
       else
         votersFederalDeputy.put(voter, this.votersFederalDeputy.get(voter) + 1);
     }
+    else if (type.equals("StateDeputy")) {
+      if (this.votersStateDeputy.get(voter) != null && this.votersStateDeputy.get(voter) >= 2)
+        throw new StopTrap("Você não pode votar mais de uma vez para deputado estadual");
+
+      this.nullStateDeputyVotes++;
+      if (this.votersStateDeputy.get(voter) == null)
+        votersStateDeputy.put(voter, 1);
+      else
+        votersStateDeputy.put(voter, this.votersStateDeputy.get(voter) + 1);
+    }
   }
 
   public void computeProtestVote(String type, Voter voter) {
@@ -122,6 +160,17 @@ public class Election {
         votersFederalDeputy.put(voter, 1);
       else
         votersFederalDeputy.put(voter, this.votersFederalDeputy.get(voter) + 1);
+    }
+
+    else if (type.equals("StateDeputy")) {
+      if (this.votersStateDeputy.get(voter) != null && this.votersStateDeputy.get(voter) >= 2)
+        throw new StopTrap("Você não pode votar mais de uma vez para deputado estadual");
+
+      this.stateDeputyProtestVotes++;
+      if (this.votersStateDeputy.get(voter) == null)
+        votersStateDeputy.put(voter, 1);
+      else
+        votersStateDeputy.put(voter, this.votersStateDeputy.get(voter) + 1);
     }
   }
 
@@ -186,6 +235,27 @@ public class Election {
     this.federalDeputyCandidates.remove(candidate.state + candidate.number);
   }
 
+  public StateDeputy getStateDeputyByNumber(String state, int number) {
+    return this.stateDeputyCandidates.get(state + number);
+  }
+
+  public void addStateDeputyCandidate(StateDeputy candidate, String password) {
+    if (!isValid(password))
+      throw new Warning("Senha inválida");
+
+    if (this.stateDeputyCandidates.get(candidate.state + candidate.number) != null)
+      throw new Warning("Numero de candidato indisponível");
+
+    this.stateDeputyCandidates.put(candidate.state + candidate.number, candidate);
+  }
+
+  public void removeStateDeputyCandidate(StateDeputy candidate, String password) {
+    if (!isValid(password))
+      throw new Warning("Senha inválida");
+
+    this.stateDeputyCandidates.remove(candidate.state + candidate.number);
+  }
+
   public String getResults(String password) {
     if (!isValid(password))
       throw new Warning("Senha inválida");
@@ -196,6 +266,7 @@ public class Election {
     var decimalFormater = new DecimalFormat("0.00");
     var presidentRank = new ArrayList<President>();
     var federalDeputyRank = new ArrayList<FederalDeputy>();
+    var stateDeputyRank = new ArrayList<StateDeputy>();
 
     var builder = new StringBuilder();
 
@@ -215,6 +286,13 @@ public class Election {
       federalDeputyRank.add(candidate);
     }
 
+     int totalVotesSD = stateDeputyProtestVotes + nullStateDeputyVotes;
+    for (Map.Entry<String, StateDeputy> candidateEntry : stateDeputyCandidates.entrySet()) {
+      StateDeputy candidate = candidateEntry.getValue();
+      totalVotesSD += candidate.numVotes;
+      stateDeputyRank.add(candidate);
+    }
+
     var sortedFederalDeputyRank = federalDeputyRank.stream()
         .sorted((o1, o2) -> o1.numVotes == o2.numVotes ? 0 : o1.numVotes < o2.numVotes ? 1 : -1)
         .collect(Collectors.toList());
@@ -222,6 +300,10 @@ public class Election {
     var sortedPresidentRank = presidentRank.stream()
         .sorted((o1, o2) -> o1.numVotes == o2.numVotes ? 0 : o1.numVotes < o2.numVotes ? 1 : -1)
         .collect(Collectors.toList());
+
+    var sortedStateDeputyRank = stateDeputyRank.stream()
+        .sorted((o1, o2) -> o1.numVotes == o2.numVotes ? 0 : o1.numVotes < o2.numVotes ? 1 : -1)
+        .collect(Collectors.toList());    
 
     builder.append("  Votos presidente:\n");
     builder.append("  Total: " + totalVotesP + "\n");
@@ -265,6 +347,32 @@ public class Election {
         + decimalFormater.format((double) firstDeputy.numVotes / (double) totalVotesFD * 100) + "% dos votos\n");
     builder.append("  2º " + secondDeputy.name + " do " + secondDeputy.party + " com "
         + decimalFormater.format((double) secondDeputy.numVotes / (double) totalVotesFD * 100) + "% dos votos\n");
+
+
+    //RESULTADOS DEPUTADO ESTADUAL
+    builder.append("\n\n  Votos deputado estadual:\n");
+    builder.append("  Votos nulos: " + nullStateDeputyVotes + " ("
+        + decimalFormater.format((double) nullStateDeputyVotes / (double) totalVotesSD * 100) + "%)\n");
+    builder.append("  Votos brancos: " + stateDeputyProtestVotes + " ("
+        + decimalFormater.format((double) stateDeputyProtestVotes / (double) totalVotesSD * 100) + "%)\n");
+    builder.append("  Total: " + totalVotesSD + "\n");
+    builder.append("\tNumero - Partido - Nome - Estado - Votos - % dos votos totais\n");
+    for (StateDeputy candidate : sortedStateDeputyRank) {
+      builder.append(
+          "\t" + candidate.number + " - " + candidate.party + " - " + candidate.state + " - " + candidate.name + " - "
+              + candidate.numVotes + " - "
+              + decimalFormater.format((double) candidate.numVotes / (double) totalVotesSD * 100)
+              + "%\n");
+    }
+
+    StateDeputy firstStateDeputy = sortedStateDeputyRank.get(0);
+    StateDeputy secondStateDeputy = sortedStateDeputyRank.get(1);
+    builder.append("\n\n  Deputados estaduais eleitos:\n");
+    builder.append("  1º " + firstStateDeputy.name + " do " + firstStateDeputy.party + " com "
+        + decimalFormater.format((double) firstStateDeputy.numVotes / (double) totalVotesSD * 100) + "% dos votos\n");
+    builder.append("  2º " + secondStateDeputy.name + " do " + secondStateDeputy.party + " com "
+        + decimalFormater.format((double) secondStateDeputy.numVotes / (double) totalVotesSD * 100) + "% dos votos\n");
+
 
     return builder.toString();
   }

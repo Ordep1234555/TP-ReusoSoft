@@ -66,8 +66,9 @@ public class Voter {
           throw new Warning("Número de candidato inválido");
         election.computeVote(candidate, this);
       }
-    } else if (type.equals("FederalDeputy"))
-      if (number == 0)
+    } else if (type.equals("FederalDeputy")){
+
+       if (number == 0)
         election.computeNullVote("FederalDeputy", this);
       else if (isProtestVote)
         election.computeProtestVote("FederalDeputy", this);
@@ -77,5 +78,23 @@ public class Voter {
           throw new Warning("Número de candidato inválido");
         election.computeVote(candidate, this);
       }
+
+    }
+
+     else if (type.equals("StateDeputy")){
+
+       if (number == 0)
+        election.computeNullVote("StateDeputy", this);
+      else if (isProtestVote)
+        election.computeProtestVote("StateDeputy", this);
+      else {
+        StateDeputy candidate = election.getStateDeputyByNumber(this.state, number);
+        if (candidate == null)
+          throw new Warning("Número de candidato inválido");
+        election.computeVote(candidate, this);
+      }
+
+    }
+     
   }
 }

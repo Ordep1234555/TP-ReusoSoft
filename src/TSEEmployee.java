@@ -5,6 +5,8 @@ public class TSEEmployee extends TSEProfessional {
       election.addPresidentCandidate((President) candidate, password);
     else if (candidate instanceof FederalDeputy)
       election.addFederalDeputyCandidate((FederalDeputy) candidate, password);
+     else if (candidate instanceof StateDeputy)
+      election.addStateDeputyCandidate((StateDeputy) candidate, password);  
   }
 
   public void removeCandidate(Candidate candidate, Election election, String password) {
@@ -12,6 +14,8 @@ public class TSEEmployee extends TSEProfessional {
       election.removePresidentCandidate((President) candidate, password);
     else if (candidate instanceof FederalDeputy)
       election.removeFederalDeputyCandidate((FederalDeputy) candidate, password);
+    else if (candidate instanceof StateDeputy)
+      election.removeStateDeputyCandidate((StateDeputy) candidate, password);  
   }
 
   public static class Builder {

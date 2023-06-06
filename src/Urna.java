@@ -50,11 +50,19 @@ public class Urna {
         print("(0) Fechar aplicação");
         int command = readInt();
         switch (command) {
-          case 1 -> voterMenu();
-          case 2 -> tseMenu();
-          case 0 -> exit = true;
-          default -> print("Comando inválido\n");
-        }
+    case 1:
+        voterMenu();
+        break;
+    case 2:
+        tseMenu();
+        break;
+    case 0:
+        exit = true;
+        break;
+    default:
+        System.out.println("Comando inválido");
+}
+
         print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
       }
     } catch (Exception e) {
@@ -206,6 +214,68 @@ public class Urna {
 
   }
 
+  //VOTAR DEPUTADO ESTADUAL
+  private static boolean voteStateDeputy(Voter voter, int counter) {
+    print("(ext) Desistir");
+    print("Digite o número do " + counter + "º candidato escolhido por você para deputado estadual:\n");
+    String vote = readString();
+    if (vote.equals("ext"))
+      throw new StopTrap("Saindo da votação");
+    // Branco
+    if (vote.equals("br")) {
+      print("Você está votando branco\n");
+      print("(1) Confirmar\n(2) Mudar voto");
+      int confirm = readInt();
+      if (confirm == 1) {
+        voter.vote(0, currentElection, "StateDeputy", true);
+        return true;
+      } else
+        return voteStateDeputy(voter, counter);
+    } else {
+      try {
+        int voteNumber = Integer.parseInt(vote);
+        // Nulo
+        if (voteNumber == 0) {
+          print("Você está votando nulo\n");
+          print("(1) Confirmar\n(2) Mudar voto\n");
+          int confirm = readInt();
+          if (confirm == 1) {
+            voter.vote(0, currentElection, "StateDeputy", false);
+            return true;
+          } else
+            return voteStateDeputy(voter, counter);
+        }
+
+        // Normal
+        StateDeputy candidate = currentElection.getStateDeputyByNumber(voter.state, voteNumber);
+        if (candidate == null) {
+          print("Nenhum candidato encontrado com este número, tente novamente");
+          print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
+          return voteStateDeputy(voter, counter);
+        }
+        print(candidate.name + " do " + candidate.party + "(" + candidate.state + ")\n");
+        print("(1) Confirmar\n(2) Mudar voto");
+        int confirm = readInt();
+        if (confirm == 1) {
+          voter.vote(voteNumber, currentElection, "StateDeputy", false);
+          return true;
+        } else if (confirm == 2)
+          return voteStateDeputy(voter, counter);
+      } catch (Warning e) {
+        print(e.getMessage());
+        return voteStateDeputy(voter, counter);
+      } catch (Error e) {
+        print(e.getMessage());
+        throw e;
+      } catch (Exception e) {
+        print("Ocorreu um erro inesperado");
+        return false;
+      }
+    }
+    return true;
+
+  }
+
   private static void voterMenu() {
     try {
       print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
@@ -234,6 +304,14 @@ public class Urna {
 
       if (voteFederalDeputy(voter, 2))
         print("Segundo voto para deputado federal registrado com sucesso");
+      print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
+
+      if (voteStateDeputy(voter, 1))
+        print("Primeiro voto para deputado estadual registrado com sucesso");
+      print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
+
+      if (voteStateDeputy(voter, 2))
+        print("Segundo voto para deputado estadual registrado com sucesso");
       print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
 
     } catch (Warning e) {
@@ -268,9 +346,10 @@ public class Urna {
     print("Qual a categoria de seu candidato?\n");
     print("(1) Presidente");
     print("(2) Deputado Federal");
+    print("(3) Deputado Estadual");
     int candidateType = readInt();
 
-    if (candidateType > 2 || candidateType < 1) {
+    if (candidateType > 3 || candidateType > 2 || candidateType < 1) {
       print("Comando inválido");
       addCandidate(tseProfessional);
     }
@@ -296,7 +375,21 @@ public class Urna {
           .party(party)
           .state(state)
           .build();
-    } else if (candidateType == 1) {
+    }else if (candidateType == 3) {
+      print("Qual o estado do candidato?");
+      String state = readString();
+
+      print("\nCadastrar o candidato deputado estadual " + name + " Nº " + number + " do " + party + "(" + state + ")?");
+      candidate = new StateDeputy.Builder()
+          .name(name)
+          .number(123)
+          .party(party)
+          .state(state)
+          .build();
+    }
+    
+    
+     else if (candidateType == 1) {
       print("\nCadastrar o candidato a presidente " + name + " Nº " + number + " do " + party + "?");
       candidate = new President.Builder()
           .name(name)
@@ -320,9 +413,10 @@ public class Urna {
     print("Qual a categoria de seu candidato?");
     print("(1) Presidente");
     print("(2) Deputado Federal");
+    print("(3) Deputado Federal");
     int candidateType = readInt();
 
-    if (candidateType > 2 || candidateType < 1) {
+    if (candidateType > 3 || candidateType > 2 || candidateType < 1) {
       print("Comando inválido");
       removeCandidate(tseProfessional);
     }
@@ -342,7 +436,21 @@ public class Urna {
       print("/Remover o candidato a deputado federal " + candidate.name + " Nº " + candidate.number + " do "
           + candidate.party + "("
           + ((FederalDeputy) candidate).state + ")?");
-    } else if (candidateType == 1) {
+    }else if (candidateType == 3) {
+      print("Qual o estado do candidato?");
+      String state = readString();
+
+      candidate = currentElection.getStateDeputyByNumber(state, number);
+      if (candidate == null) {
+        print("Candidato não encontrado");
+        return;
+      }
+      print("/Remover o candidato a deputado estadual " + candidate.name + " Nº " + candidate.number + " do "
+          + candidate.party + "("
+          + ((StateDeputy) candidate).state + ")?");
+    } 
+    
+    else if (candidateType == 1) {
       candidate = currentElection.getPresidentByNumber(number);
       if (candidate == null) {
         print("Candidato não encontrado");
@@ -412,11 +520,19 @@ public class Urna {
           print("(0) Sair");
           int command = readInt();
           switch (command) {
-            case 1 -> addCandidate((TSEEmployee) tseProfessional);
-            case 2 -> removeCandidate((TSEEmployee) tseProfessional);
-            case 0 -> back = true;
-            default -> print("Comando inválido\n");
-          }
+    case 1:
+        addCandidate((TSEEmployee) tseProfessional);
+        break;
+    case 2:
+        removeCandidate((TSEEmployee) tseProfessional);
+        break;
+    case 0:
+        back = true;
+        break;
+    default:
+        System.out.println("Comando inválido");
+}
+
         } else if (tseProfessional instanceof CertifiedProfessional) {
           print("(1) Iniciar sessão");
           print("(2) Finalizar sessão");
@@ -424,12 +540,22 @@ public class Urna {
           print("(0) Sair");
           int command = readInt();
           switch (command) {
-            case 1 -> startSession((CertifiedProfessional) tseProfessional);
-            case 2 -> endSession((CertifiedProfessional) tseProfessional);
-            case 3 -> showResults((CertifiedProfessional) tseProfessional);
-            case 0 -> back = true;
-            default -> print("Comando inválido\n");
-          }
+    case 1:
+        startSession((CertifiedProfessional) tseProfessional);
+        break;
+    case 2:
+        endSession((CertifiedProfessional) tseProfessional);
+        break;
+    case 3:
+        showResults((CertifiedProfessional) tseProfessional);
+        break;
+    case 0:
+        back = true;
+        break;
+    default:
+        System.out.println("Comando inválido");
+}
+
         }
       }
     } catch (Warning e) {
@@ -478,17 +604,45 @@ public class Urna {
 
     President presidentCandidate1 = new President.Builder().name("João").number(123).party("PDS1").build();
     currentElection.addPresidentCandidate(presidentCandidate1, electionPassword);
+
     President presidentCandidate2 = new President.Builder().name("Maria").number(124).party("ED").build();
+
     currentElection.addPresidentCandidate(presidentCandidate2, electionPassword);
+
     FederalDeputy federalDeputyCandidate1 = new FederalDeputy.Builder().name("Carlos").number(12345).party("PDS1")
         .state("MG").build();
+
     currentElection.addFederalDeputyCandidate(federalDeputyCandidate1, electionPassword);
+
     FederalDeputy federalDeputyCandidate2 = new FederalDeputy.Builder().name("Cleber").number(54321).party("PDS2")
         .state("MG").build();
+
     currentElection.addFederalDeputyCandidate(federalDeputyCandidate2, electionPassword);
     FederalDeputy federalDeputyCandidate3 = new FederalDeputy.Builder().name("Sofia").number(11211).party("IHC")
         .state("MG").build();
+
     currentElection.addFederalDeputyCandidate(federalDeputyCandidate3, electionPassword);
+
+
+    //Adicionar deputados estaduais
+
+    StateDeputy StateDeputyCandidate1 = new StateDeputy.Builder().name("Alberto").number(1234567).party("PDS1")
+        .state("MG").build();
+
+        currentElection.addStateDeputyCandidate(StateDeputyCandidate1, electionPassword);
+
+    StateDeputy StateDeputyCandidate2 = new StateDeputy.Builder().name("Jorlan").number(7654321).party("PDS2")
+        .state("MG").build();
+
+
+
+      currentElection.addStateDeputyCandidate(StateDeputyCandidate2, electionPassword);
+
+      StateDeputy StateDeputyCandidate3 = new StateDeputy.Builder().name("Renata").number(87654321).party("PDS3")
+        .state("MG").build();
+
+      currentElection.addStateDeputyCandidate(StateDeputyCandidate3, electionPassword);  
+
 
     // Startar todo os eleitores e profissionais do TSE
     loadVoters();
