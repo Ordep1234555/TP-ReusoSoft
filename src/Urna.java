@@ -276,6 +276,67 @@ public class Urna {
 
   }
 
+  private static boolean voteVereador(Voter voter) {
+    print("(ext) Desistir");
+    print("Digite o número do candidato escolhido por você para vereador:");
+    String vote = readString();
+    if (vote.equals("ext"))
+      throw new StopTrap("Saindo da votação");
+    // Branco
+    else if (vote.equals("br")) {
+      print("Você está votando branco\n");
+      print("(1) Confirmar\n(2) Mudar voto");
+      int confirm = readInt();
+      if (confirm == 1) {
+        voter.vote(0, currentElection, "Vereador", true);
+        return true;
+      } else
+        voteVereador(voter);
+    } else {
+      try {
+        int voteNumber = Integer.parseInt(vote);
+        // Nulo
+        if (voteNumber == 0) {
+          print("Você está votando nulo\n");
+          print("(1) Confirmar\n(2) Mudar voto");
+          int confirm = readInt();
+          if (confirm == 1) {
+            voter.vote(0, currentElection, "Vereador", false);
+            return true;
+          } else
+            voteVereador(voter);
+        }
+
+        // Normal
+        Vereador candidate = currentElection.getVereadorByNumber(voteNumber);
+        if (candidate == null) {
+          print("Nenhum candidato encontrado com este número, tente novamente");
+          print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
+          return voteVereador(voter);
+        }
+        print(candidate.name + " do " + candidate.party + "\n");
+        print("(1) Confirmar\n(2) Mudar voto");
+        int confirm = readInt();
+        if (confirm == 1) {
+          voter.vote(voteNumber, currentElection, "Vereador", false);
+          return true;
+        } else if (confirm == 2)
+          return voteVereador(voter);
+      } catch (Warning e) {
+        print(e.getMessage());
+        return voteVereador(voter);
+      } catch (Error e) {
+        print(e.getMessage());
+        throw e;
+      } catch (Exception e) {
+        print("Ocorreu um erro inesperado");
+        return false;
+      }
+    }
+    return true;
+
+  }
+
   private static void voterMenu() {
     try {
       print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
@@ -312,6 +373,10 @@ public class Urna {
 
       if (voteStateDeputy(voter, 2))
         print("Segundo voto para deputado estadual registrado com sucesso");
+      print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
+
+      if (voteVereador(voter))
+        print("Voto para vereador registrado com sucesso");
       print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
 
     } catch (Warning e) {
@@ -642,6 +707,18 @@ public class Urna {
         .state("MG").build();
 
       currentElection.addStateDeputyCandidate(StateDeputyCandidate3, electionPassword);  
+
+
+      //ADICIONAR VEREADORES
+      Vereador vereador1 = new Vereador.Builder().name("Antunes").number(123456789).party("PDS1").city("BH")
+        .build();
+
+        currentElection.addVereadorCandidate(vereador1, electionPassword);  
+
+      Vereador vereador2 = new Vereador.Builder().name("Arnaldo").number(987654321).party("PDS2").city("BH")
+        .build();
+
+      currentElection.addVereadorCandidate(vereador2, electionPassword);  
 
 
     // Startar todo os eleitores e profissionais do TSE

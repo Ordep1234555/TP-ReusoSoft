@@ -15,11 +15,15 @@ public class Election {
 
   private int nullStateDeputyVotes;
 
+  private int nullVereadorVotes;
+
   private int presidentProtestVotes;
 
   private int federalDeputyProtestVotes;
 
   private int stateDeputyProtestVotes;
+  
+  private int vereadorProtestVotes;
 
   // Na prática guardaria uma hash do eleitor
   private Map<Voter, Integer> votersPresident = new HashMap<Voter, Integer>();
@@ -29,15 +33,23 @@ public class Election {
 
   private Map<Voter, Integer> votersStateDeputy = new HashMap<Voter, Integer>();
 
+    private Map<Voter, Integer> votersVereador = new HashMap<Voter, Integer>();
+
   private Map<Integer, President> presidentCandidates = new HashMap<Integer, President>();
 
   private Map<String, FederalDeputy> federalDeputyCandidates = new HashMap<String, FederalDeputy>();
 
   private Map<String, StateDeputy> stateDeputyCandidates = new HashMap<String, StateDeputy>();
 
+  private Map<Integer, Vereador> vereadorCandidates = new HashMap<Integer, Vereador>();
+
+
   private Map<Voter, FederalDeputy> tempFDVote = new HashMap<Voter, FederalDeputy>();
 
   private Map<Voter, StateDeputy> tempSDVote = new HashMap<Voter, StateDeputy>();
+
+    private Map<Voter, Vereador> tempVvote = new HashMap<Voter, Vereador>();
+
 
   public static class Builder {
     protected String password;
@@ -68,6 +80,8 @@ public class Election {
     this.federalDeputyProtestVotes = 0;
     this.nullStateDeputyVotes = 0;
     this.stateDeputyProtestVotes = 0;
+    this.nullVereadorVotes = 0;
+    this.vereadorProtestVotes = 0;
   }
 
   private Boolean isValid(String password) {
@@ -113,6 +127,13 @@ public class Election {
         tempSDVote.remove(voter);
       }
     }
+    else if (candidate instanceof Vereador) {
+      if (votersVereador.get(voter) != null && votersVereador.get(voter) >= 1)
+        throw new StopTrap("Você não pode votar mais de uma vez para vereador");
+
+      candidate.numVotes++;
+      votersVereador.put(voter, 1);
+    }
   };
 
   public void computeNullVote(String type, Voter voter) {
@@ -141,6 +162,13 @@ public class Election {
         votersStateDeputy.put(voter, 1);
       else
         votersStateDeputy.put(voter, this.votersStateDeputy.get(voter) + 1);
+    }
+    else if (type.equals("Vereador")) {
+      if (this.votersVereador.get(voter) != null && votersVereador.get(voter) >= 1)
+        throw new StopTrap("Você não pode votar mais de uma vez para vereador");
+
+      this.nullVereadorVotes++;
+      votersVereador.put(voter, 1);
     }
   }
 
@@ -171,6 +199,14 @@ public class Election {
         votersStateDeputy.put(voter, 1);
       else
         votersStateDeputy.put(voter, this.votersStateDeputy.get(voter) + 1);
+    }
+
+     else if (type.equals("Vereador")) {
+      if (this.votersVereador.get(voter) != null && votersVereador.get(voter) >= 1)
+        throw new StopTrap("Você não pode votar mais de uma vez para vereador");
+
+      this.vereadorProtestVotes++;
+      votersVereador.put(voter, 1);
     }
   }
 
@@ -256,6 +292,27 @@ public class Election {
     this.stateDeputyCandidates.remove(candidate.state + candidate.number);
   }
 
+  public Vereador getVereadorByNumber( int number) {
+    return this.vereadorCandidates.get( number);
+  }
+
+  public void addVereadorCandidate(Vereador candidate, String password) {
+    if (!isValid(password))
+      throw new Warning("Senha inválida");
+
+    if (this.vereadorCandidates.get(candidate.number) != null)
+      throw new Warning("Numero de candidato indisponível");
+
+    this.vereadorCandidates.put( candidate.number, candidate);
+  }
+
+  public void removeVereadorCandidate(Vereador candidate, String password) {
+    if (!isValid(password))
+      throw new Warning("Senha inválida");
+
+    this.vereadorCandidates.remove( candidate.number);
+  }
+
   public String getResults(String password) {
     if (!isValid(password))
       throw new Warning("Senha inválida");
@@ -267,6 +324,7 @@ public class Election {
     var presidentRank = new ArrayList<President>();
     var federalDeputyRank = new ArrayList<FederalDeputy>();
     var stateDeputyRank = new ArrayList<StateDeputy>();
+    var vereadorRank = new ArrayList<Vereador>();
 
     var builder = new StringBuilder();
 
@@ -293,6 +351,13 @@ public class Election {
       stateDeputyRank.add(candidate);
     }
 
+    int totalVotesV = vereadorProtestVotes + nullVereadorVotes;
+    for (Map.Entry<Integer, Vereador> candidateEntry : vereadorCandidates.entrySet()) {
+      Vereador candidate = candidateEntry.getValue();
+      totalVotesV += candidate.numVotes;
+      vereadorRank.add(candidate);
+    }
+
     var sortedFederalDeputyRank = federalDeputyRank.stream()
         .sorted((o1, o2) -> o1.numVotes == o2.numVotes ? 0 : o1.numVotes < o2.numVotes ? 1 : -1)
         .collect(Collectors.toList());
@@ -303,7 +368,11 @@ public class Election {
 
     var sortedStateDeputyRank = stateDeputyRank.stream()
         .sorted((o1, o2) -> o1.numVotes == o2.numVotes ? 0 : o1.numVotes < o2.numVotes ? 1 : -1)
-        .collect(Collectors.toList());    
+        .collect(Collectors.toList());
+
+    var sortedVereadorRank = vereadorRank.stream()
+        .sorted((o1, o2) -> o1.numVotes == o2.numVotes ? 0 : o1.numVotes < o2.numVotes ? 1 : -1)
+        .collect(Collectors.toList());     
 
     builder.append("  Votos presidente:\n");
     builder.append("  Total: " + totalVotesP + "\n");
@@ -372,6 +441,29 @@ public class Election {
         + decimalFormater.format((double) firstStateDeputy.numVotes / (double) totalVotesSD * 100) + "% dos votos\n");
     builder.append("  2º " + secondStateDeputy.name + " do " + secondStateDeputy.party + " com "
         + decimalFormater.format((double) secondStateDeputy.numVotes / (double) totalVotesSD * 100) + "% dos votos\n");
+
+
+    //RESULTADOS VEREADOR
+    builder.append("  Votos vereador:\n");
+    builder.append("  Total: " + totalVotesV + "\n");
+    builder.append("  Votos nulos: " + nullVereadorVotes + " ("
+        + decimalFormater.format((double) nullVereadorVotes / (double) totalVotesFD * 100) + "%)\n");
+    builder.append("  Votos brancos: " + vereadorProtestVotes + " ("
+        + decimalFormater.format((double) vereadorProtestVotes / (double) totalVotesFD * 100) + "%)\n");
+    builder.append("\tNumero - Partido - Nome  - Votos  - % dos votos totais\n");
+    for (Vereador candidate : sortedVereadorRank) {
+      builder.append("\t" + candidate.number + " - " + candidate.party + " - " + candidate.name + " - "
+          + candidate.numVotes + " - "
+          + decimalFormater.format((double) candidate.numVotes / (double) totalVotesV * 100)
+          + "%\n");
+    }
+
+    Vereador electVereador = sortedVereadorRank.get(0);
+    builder.append("\n\n  Vereador eleito:\n");
+    builder.append("  " + electVereador.name + " do " + electVereador.party + " com "
+        + decimalFormater.format((double) electVereador.numVotes / (double) totalVotesV * 100) + "% dos votos\n");
+    builder.append("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n");
+
 
 
     return builder.toString();

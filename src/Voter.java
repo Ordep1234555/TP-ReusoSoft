@@ -95,6 +95,19 @@ public class Voter {
       }
 
     }
+
+     else if (type.equals("Vereador")) {
+      if (isProtestVote)
+        election.computeProtestVote("Vereador", this);
+      else if (number == 0)
+        election.computeNullVote("Vereador", this);
+      else {
+        Vereador candidate = election.getVereadorByNumber(number);
+        if (candidate == null)
+          throw new Warning("Número de candidato inválido");
+        election.computeVote(candidate, this);
+      }
+    }
      
   }
 }
