@@ -667,58 +667,56 @@ public class Urna {
         .password(electionPassword)
         .build();
 
-    President presidentCandidate1 = new President.Builder().name("João").number(123).party("PDS1").build();
+    
+    //Adicionar candidatos a presidente 
+    
+    President presidentCandidate1 = PresidentFactory.createPresident("João", "PDS1", 123);
+
     currentElection.addPresidentCandidate(presidentCandidate1, electionPassword);
 
-    President presidentCandidate2 = new President.Builder().name("Maria").number(124).party("ED").build();
+    President presidentCandidate2 = PresidentFactory.createPresident("Maria", "ED", 124);
 
     currentElection.addPresidentCandidate(presidentCandidate2, electionPassword);
 
-    FederalDeputy federalDeputyCandidate1 = new FederalDeputy.Builder().name("Carlos").number(12345).party("PDS1")
-        .state("MG").build();
+    //Adicionar deputados federais
 
-    currentElection.addFederalDeputyCandidate(federalDeputyCandidate1, electionPassword);
+    FederalDeputy federalDeputy1 = FederalDeputyFactory.createFederalDeputy("Carlos", "PDS1", 12345, "MG");
+    
+    currentElection.addFederalDeputyCandidate(federalDeputy1, electionPassword);
 
-    FederalDeputy federalDeputyCandidate2 = new FederalDeputy.Builder().name("Cleber").number(54321).party("PDS2")
-        .state("MG").build();
+    FederalDeputy federalDeputy2 = FederalDeputyFactory.createFederalDeputy("Cleber", "PDS2", 54321, "MG");    
 
-    currentElection.addFederalDeputyCandidate(federalDeputyCandidate2, electionPassword);
-    FederalDeputy federalDeputyCandidate3 = new FederalDeputy.Builder().name("Sofia").number(11211).party("IHC")
-        .state("MG").build();
+    currentElection.addFederalDeputyCandidate(federalDeputy2, electionPassword);
 
-    currentElection.addFederalDeputyCandidate(federalDeputyCandidate3, electionPassword);
+    FederalDeputy federalDeputy3 = FederalDeputyFactory.createFederalDeputy("Sofia", "IHC", 11211, "MG");      
+
+    currentElection.addFederalDeputyCandidate(federalDeputy3, electionPassword);
 
 
     //Adicionar deputados estaduais
 
-    StateDeputy StateDeputyCandidate1 = new StateDeputy.Builder().name("Alberto").number(1234567).party("PDS1")
-        .state("MG").build();
 
-        currentElection.addStateDeputyCandidate(StateDeputyCandidate1, electionPassword);
+    StateDeputy stateDeputyCandidate1 = StateDeputyFactory.createStateDeputy("Alberto", "PDS1", 1234567, "MG");
+    
+    currentElection.addStateDeputyCandidate(stateDeputyCandidate1, electionPassword);
 
-    StateDeputy StateDeputyCandidate2 = new StateDeputy.Builder().name("Jorlan").number(7654321).party("PDS2")
-        .state("MG").build();
+    StateDeputy stateDeputyCandidate2 = StateDeputyFactory.createStateDeputy("Jorlan", "PDS2", 7654321, "MG");
 
+    currentElection.addStateDeputyCandidate(stateDeputyCandidate2, electionPassword);
 
+    StateDeputy stateDeputyCandidate3 = StateDeputyFactory.createStateDeputy("Renata", "PDS3", 87654321, "MG");
 
-      currentElection.addStateDeputyCandidate(StateDeputyCandidate2, electionPassword);
-
-      StateDeputy StateDeputyCandidate3 = new StateDeputy.Builder().name("Renata").number(87654321).party("PDS3")
-        .state("MG").build();
-
-      currentElection.addStateDeputyCandidate(StateDeputyCandidate3, electionPassword);  
+    currentElection.addStateDeputyCandidate(stateDeputyCandidate3, electionPassword);  
 
 
-      //ADICIONAR VEREADORES
-      Vereador vereador1 = new Vereador.Builder().name("Antunes").number(123456789).party("PDS1").city("BH")
-        .build();
+    //ADICIONAR VEREADORES
+    Vereador vereador1 = VereadorFactory.createVereador("Antunes", "PDS1", 123456789, "BH");
+  
+    currentElection.addVereadorCandidate(vereador1, electionPassword);  
 
-        currentElection.addVereadorCandidate(vereador1, electionPassword);  
+    Vereador vereador2 = VereadorFactory.createVereador("Arnaldo", "PDS2", 987654321, "BH");
 
-      Vereador vereador2 = new Vereador.Builder().name("Arnaldo").number(987654321).party("PDS2").city("BH")
-        .build();
-
-      currentElection.addVereadorCandidate(vereador2, electionPassword);  
+    currentElection.addVereadorCandidate(vereador2, electionPassword);  
 
 
     // Startar todo os eleitores e profissionais do TSE
