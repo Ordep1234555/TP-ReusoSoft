@@ -669,7 +669,7 @@ public class Urna {
 
     
     //Adicionar candidatos a presidente 
-    
+
     President presidentCandidate1 = PresidentFactory.createPresident("João", "PDS1", 123);
 
     currentElection.addPresidentCandidate(presidentCandidate1, electionPassword);
@@ -710,7 +710,7 @@ public class Urna {
 
 
     //ADICIONAR VEREADORES
-    Vereador vereador1 = VereadorFactory.createVereador("Antunes", "PDS1", 123456789, "BH");
+    Vereador vereador1 = VereadorFactory.createVereador("Ana", "PDS1", 123456789, "BH");
   
     currentElection.addVereadorCandidate(vereador1, electionPassword);  
 
